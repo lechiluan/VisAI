@@ -1,4 +1,6 @@
 # Y4A-Hackathon-2025
+<img width="1917" height="908" alt="image" src="https://github.com/user-attachments/assets/cca23db5-9c51-4b80-902c-fef78d5dd346" />
+<img width="1909" height="909" alt="image" src="https://github.com/user-attachments/assets/aec2a7d5-dbe2-42e0-b474-bc45150c3f63" />
 
 ## Python Version is 3.10.5
 
@@ -41,5 +43,5 @@ OPENAI_API_KEY=YOUR_OPENAI_API_KEY
 **4. Start Server**
 
 ```sh
-python main.py
+streamlit run main.py
 ```
