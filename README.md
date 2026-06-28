@@ -34,14 +34,12 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-**3. Create a .env file**
-
-```sh
-OPENAI_API_KEY=YOUR_OPENAI_API_KEY
-```
-
-**4. Start Server**
+**3. Start Server**
 
 ```sh
 streamlit run main.py
 ```
+
+**4. Enter OpenAI API Key**
+
+After the app opens, enter your OpenAI API key in the sidebar before using VisAI.

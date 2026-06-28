@@ -8,8 +8,24 @@ from io import BytesIO
 import json
 
 load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY")
-client = OpenAI()
+
+
+def set_openai_api_key(api_key):
+    """Set the OpenAI key for the current app session."""
+    clean_key = api_key.strip() if api_key else ""
+    if not clean_key:
+        raise ValueError("OpenAI API key is required.")
+
+    os.environ["OPENAI_API_KEY"] = clean_key
+    openai.api_key = clean_key
+
+
+def get_openai_client():
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise ValueError("Please enter your OpenAI API key before using VisAI.")
+
+    return OpenAI(api_key=api_key)
 
 
 def verify_image_url(url):
@@ -30,7 +46,7 @@ def verify_image_url(url):
 
 
 def get_response(prompt):
-    response = client.chat.completions.create(
+    response = get_openai_client().chat.completions.create(
         model="gpt-4o-mini",
         messages=prompt,
         temperature=0

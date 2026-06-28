@@ -2,7 +2,48 @@ import streamlit as st
 import requests
 from PIL import Image
 from io import BytesIO
-from model_ai import generate_prompt
+from model_ai import generate_prompt, set_openai_api_key
+
+
+def mask_openai_key(api_key):
+    clean_key = api_key.strip() if api_key else ""
+    if len(clean_key) <= 5:
+        return "*" * min(len(clean_key), 10)
+
+    hidden_count = min(len(clean_key) - 5, 10)
+    return f"{clean_key[:2]}{'*' * hidden_count}{clean_key[-3:]}"
+
+
+def show_api_key_login():
+    st.title("VisAI")
+    st.markdown("### Enter OpenAI API Key")
+    st.info("Please enter your OpenAI API key before using the project.")
+
+    with st.form("openai_key_login_form"):
+        api_key = st.text_input(
+            "OpenAI API Key",
+            type="password",
+            placeholder="sk-...",
+            help="Your key is kept in this Streamlit session and displayed as a masked value after login.",
+        )
+        submit_button = st.form_submit_button(
+            "Continue", type="primary", use_container_width=True)
+
+    if submit_button:
+        clean_key = api_key.strip()
+        if not clean_key:
+            st.error("Please enter your OpenAI API key.")
+            return
+
+        try:
+            set_openai_api_key(clean_key)
+        except ValueError as exc:
+            st.error(str(exc))
+            return
+
+        st.session_state['openai_api_key'] = clean_key
+        st.session_state['is_logged_in'] = True
+        st.rerun()
 
 
 def is_valid_image_url(url):
@@ -50,23 +91,49 @@ def main():
         </style>
     """, unsafe_allow_html=True)
 
+    if 'openai_api_key' not in st.session_state:
+        st.session_state['openai_api_key'] = ""
+
+    if 'is_logged_in' not in st.session_state:
+        st.session_state['is_logged_in'] = bool(st.session_state['openai_api_key'])
+
+    if not st.session_state['is_logged_in']:
+        show_api_key_login()
+        return
+
+    set_openai_api_key(st.session_state['openai_api_key'])
+
     st.title(":mag_right: VisAI - DELIVERY PACKAGE DAMAGE DETECTION")
 
     with st.sidebar:
+        st.header("OpenAI API Key")
+        st.code(mask_openai_key(st.session_state['openai_api_key']), language="text")
+        st.success("OpenAI API key is ready.")
+
+        if st.button("Change key", use_container_width=True):
+            st.session_state['openai_api_key'] = ""
+            st.session_state['is_logged_in'] = False
+            st.session_state['analysis_results'] = None
+            st.rerun()
+
+        st.divider()
         st.header("Instructions")
         st.markdown(
             """
             ### How to Use:
             
-            **1. Input Images**
+            **1. OpenAI API Key**
+            - Enter your OpenAI API key on the login screen
+            
+            **2. Input Images**
             - Enter a list of image URLs
             - Separate URLs with commas
             
-            **2. Analysis**
+            **3. Analysis**
             - Click "Analyze Responsibility"
             - Wait for processing
             
-            **3. Results**
+            **4. Results**
             - Review image validation
             - Check responsibility assessment
             - Read detailed analysis
@@ -96,7 +163,10 @@ def main():
 
     with button_cols[0]:
         analyze_button = st.button(
-            "🔍 Analyze Responsibility", type="primary", use_container_width=True)
+            "🔍 Analyze Responsibility",
+            type="primary",
+            use_container_width=True,
+        )
 
     with button_cols[1]:
         clear_button = st.button("❌Clear", use_container_width=True)
@@ -106,6 +176,12 @@ def main():
         st.session_state['analysis_results'] = None
 
     if analyze_button:
+        try:
+            set_openai_api_key(st.session_state.get('openai_api_key', ''))
+        except ValueError as exc:
+            st.error(str(exc))
+            return
+
         if urls_input:
             urls = [url.strip()
                     for url in urls_input.split(',') if url.strip()]
